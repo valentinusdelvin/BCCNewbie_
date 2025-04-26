@@ -1,9 +1,20 @@
 package usecase
 
-type UserUsecaseItf interface {}
+import (
+	"hackfest-uc/internal/app/user/repository"
+	"hackfest-uc/internal/infra/jwt"
+)
 
-type UserUsecase struct {}
+type UserUsecaseItf interface{}
 
-func NewUserUsecase() UserUsecaseItf {
-    return &UserUsecase{}
+type UserUsecase struct {
+	userRepo repository.UserMySQLItf
+	jwt      jwt.JWT
+}
+
+func NewUserUsecase(userRepo repository.UserMySQLItf, jwt jwt.JWT) UserUsecaseItf {
+	return &UserUsecase{
+		userRepo: userRepo,
+		jwt:      jwt,
+	}
 }
