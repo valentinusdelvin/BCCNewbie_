@@ -1,7 +1,7 @@
 package rest
 
-type WasteDepositHandler struct {}
+// type WasteDepositHandler struct {}
 
-func NewWasteDepositHandler() {
-    WasteDepositHandler := WasteDepositHandler{}
-}
+// func NewWasteDepositHandler() {
+//     WasteDepositHandler := WasteDepositHandler{}
+// }

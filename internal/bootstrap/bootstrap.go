@@ -2,12 +2,16 @@ package bootstrap
 
 import (
 	"fmt"
-	"hackfest-uc/internal/app/user/interface/rest"
-	"hackfest-uc/internal/app/user/repository"
-	"hackfest-uc/internal/app/user/usecase"
+	MarketHandler "hackfest-uc/internal/app/market/interface/rest"
+	MarketRepository "hackfest-uc/internal/app/market/repository"
+	MarketUseCase "hackfest-uc/internal/app/market/usecase"
+	UserHandler "hackfest-uc/internal/app/user/interface/rest"
+	UserRepository "hackfest-uc/internal/app/user/repository"
+	UserUsecase "hackfest-uc/internal/app/user/usecase"
 	"hackfest-uc/internal/domain/entity"
 	"hackfest-uc/internal/infra/env"
 	"hackfest-uc/internal/infra/jwt"
+	"hackfest-uc/internal/infra/supabase"
 	"hackfest-uc/internal/middleware"
 
 	"log"
@@ -43,7 +47,19 @@ func Start() error {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
+	err = database.AutoMigrate(entity.Store{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	err = database.AutoMigrate(entity.Market{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
 	app := fiber.New()
+
+	sb := supabase.Init()
 
 	validator := validator.New()
 
@@ -53,9 +69,13 @@ func Start() error {
 
 	v1 := app.Group("/api/v1")
 
-	userRepo := repository.NewUserMySQL(database)
-	userUsecase := usecase.NewUserUsecase(userRepo, *jwt)
-	rest.NewUserHandler(v1, userUsecase, *validator, middlewareService)
+	userRepo := UserRepository.NewUserMySQL(database)
+	userUsecase := UserUsecase.NewUserUsecase(userRepo, *jwt)
+	UserHandler.NewUserHandler(v1, userUsecase, *validator, middlewareService)
+
+	marketRepo := MarketRepository.NewMarketMySQL(database)
+	marketUsecase := MarketUseCase.NewMarketUsecase(marketRepo, sb)
+	MarketHandler.NewMarketHandler(v1, marketUsecase, middlewareService)
 
 	return app.Listen(fmt.Sprintf(":%d", config.AppPort))
 }
