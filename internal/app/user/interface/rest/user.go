@@ -1,14 +1,18 @@
 package rest
 
 import (
+	"fmt"
 	"hackfest-uc/internal/app/user/usecase"
 	"hackfest-uc/internal/domain/dto"
+	"hackfest-uc/internal/infra/supabase"
 	"hackfest-uc/internal/middleware"
 	"hackfest-uc/internal/validation"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strings"
 
+	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -17,23 +21,24 @@ type UserHandler struct {
 	usecase    usecase.UserUsecaseItf
 	validator  validation.InputValidation
 	middleware middleware.MiddlewareItf
+	supabase   supabase.SupabaseItf
 }
 
-func NewUserHandler(routerGroup fiber.Router, validator validation.InputValidation, userUsecase usecase.UserUsecaseItf, middleware middleware.MiddlewareItf) {
+func NewUserHandler(routerGroup fiber.Router, validator validation.InputValidation, userUsecase usecase.UserUsecaseItf, middleware middleware.MiddlewareItf, supabase supabase.SupabaseItf) {
 	UserHandler := UserHandler{
 		usecase:    userUsecase,
 		validator:  validator,
 		middleware: middleware,
+		supabase:   supabase,
 	}
 
-	routerGroup = routerGroup.Group("/users")
 	routerGroup.Post("/register", UserHandler.Register)
 	routerGroup.Post("/login", UserHandler.Login)
 
-	protectedGroup := routerGroup.Group("/users", middleware.Authentication)
-	protectedGroup.Get("/", UserHandler.GetProfile)
-	protectedGroup.Put("/", UserHandler.UpdateProfile)
-	protectedGroup.Put("/picture", UserHandler.UpdateProfilePicture)
+	userProtected := routerGroup.Group("/users", middleware.Authentication)
+	userProtected.Get("/", UserHandler.GetProfile)
+	userProtected.Patch("/", UserHandler.UpdateProfile)
+	userProtected.Patch("/picture", UserHandler.UpdateProfilePicture)
 }
 
 func (h *UserHandler) Register(ctx *fiber.Ctx) error {
@@ -158,46 +163,90 @@ func (h *UserHandler) UpdateProfile(c *fiber.Ctx) error {
 		})
 	}
 
-	profile, err := h.usecase.UpdateProfile(userID, req)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to update profile",
+	if err := h.validator.Validate(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Validation failed",
 		})
 	}
 
-	return c.JSON(profile)
+	if err := h.validator.Validator.Struct(req); err != nil {
+		validationErrors := make(map[string]string)
+		for _, err := range err.(validator.ValidationErrors) {
+			field := strings.ToLower(err.Field())
+			validationErrors[field] = fmt.Sprintf("%s is invalid", field)
+		}
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Validation failed",
+			"details": validationErrors,
+		})
+	}
+
+	updatedProfile, err := h.usecase.UpdateProfile(userID, req)
+	if err != nil {
+		log.Printf("Failed to update profile: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   "Failed to update profile",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Profile updated successfully",
+		"data":    updatedProfile,
+	})
 }
 
-func (h UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
+func (h *UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
 	userID, ok := c.Locals("userId").(uuid.UUID)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Invalid user ID",
+			"success": false,
+			"error":   "Invalid user ID",
 		})
 	}
 
-	// Get file from form data
 	file, err := c.FormFile("image")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Image is required",
+			"success": false,
+			"error":   "Image file is required",
 		})
 	}
 
-	// Validate file size (max 2MB)
-	if file.Size > 2<<20 {
+	if file.Size > 2<<20 { // 2MB limit
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Image too large (max 2MB)",
+			"success": false,
+			"error":   "Image too large (max 2MB)",
 		})
 	}
 
-	profile, err := h.usecase.UpdateProfilePicture(userID, file)
-	if err != nil {
+	ext := filepath.Ext(file.Filename)
+	allowedExtensions := map[string]bool{
+		".jpg":  true,
+		".jpeg": true,
+		".png":  true,
+	}
+	if !allowedExtensions[strings.ToLower(ext)] {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Only JPG/JPEG/PNG files are allowed",
+		})
+	}
+
+	if err := h.usecase.UpdateProfilePicture(userID, file); err != nil {
+		log.Printf("Failed to update profile picture: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
 			"error":   "Failed to update profile picture",
 			"details": err.Error(),
 		})
 	}
 
-	return c.JSON(profile)
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Profile picture updated successfully",
+	})
 }

@@ -85,7 +85,7 @@ func Start() error {
 
 	userRepo := UserRepository.NewUserMySQL(database)
 	userUsecase := UserUsecase.NewUserUsecase(userRepo, *jwt, *validator, sb)
-	UserHandler.NewUserHandler(v1, *validator, userUsecase, middlewareService)
+	UserHandler.NewUserHandler(v1, *validator, userUsecase, middlewareService, sb)
 
 	wasteDepositRepo := WasteDepositRepo.NewWasteDepositMySQL(database)
 	wasteDepositUsecase := WasteDepositUsecase.NewWasteDepositUsecase(wasteDepositRepo)

@@ -20,7 +20,7 @@ type UserUsecaseItf interface {
 	Login(login dto.Login) (string, error)
 	GetProfile(userId uuid.UUID) (dto.ProfileResponse, error)
 	UpdateProfile(userId uuid.UUID, req dto.UpdateProfileRequest) (dto.ProfileResponse, error)
-	UpdateProfilePicture(userID uuid.UUID, file *multipart.FileHeader) (dto.ProfileResponse, error)
+	UpdateProfilePicture(userID uuid.UUID, file *multipart.FileHeader) error
 }
 
 type UserUsecase struct {
@@ -132,15 +132,11 @@ func (u UserUsecase) UpdateProfile(userId uuid.UUID, req dto.UpdateProfileReques
 	return u.GetProfile(userId)
 }
 
-func (u UserUsecase) UpdateProfilePicture(userID uuid.UUID, file *multipart.FileHeader) (dto.ProfileResponse, error) {
+func (u UserUsecase) UpdateProfilePicture(userID uuid.UUID, file *multipart.FileHeader) error {
 	imageURL, err := u.supabase.Upload(file)
 	if err != nil {
-		return dto.ProfileResponse{}, err
+		return err
 	}
 
-	if err := u.userRepo.UpdateProfilePicture(userID, imageURL); err != nil {
-		return dto.ProfileResponse{}, err
-	}
-
-	return u.GetProfile(userID)
+	return u.userRepo.UpdateProfilePicture(userID, imageURL)
 }
