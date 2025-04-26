@@ -19,14 +19,11 @@ type Env struct {
 }
 
 func New() (*Env, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, err
-	}
+	_ = godotenv.Load()
 
 	config := new(Env)
 
-	err = env.Parse(config)
+	err := env.Parse(config)
 	if err != nil {
 		return nil, err
 	}
