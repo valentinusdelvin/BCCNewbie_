@@ -49,6 +49,7 @@ func Start() error {
 
 	jwt := jwt.NewJWT()
 	middlewareService := middleware.NewMiddleware(jwt)
+	middleware.CorsMiddleware(app)
 
 	v1 := app.Group("/api/v1")
 
