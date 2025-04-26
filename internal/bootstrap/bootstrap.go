@@ -24,7 +24,7 @@ import (
 func Start() error {
 	config, err := env.New()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to load environment variables: %v", err)
 	}
 
 	dsn := fmt.Sprintf(
