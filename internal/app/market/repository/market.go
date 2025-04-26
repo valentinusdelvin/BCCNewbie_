@@ -8,7 +8,7 @@ import (
 
 type MarketMySQLItf interface {
 	CreateProduct(product entity.Market) (entity.Market, error)
-	GetAllProducts() ([]entity.Market, error)
+	GetAllProducts(page, size int) ([]entity.Market, error)
 	GetProductByID(productID string) (*entity.Market, error)
 	InitDummyStores() error
 }
@@ -45,9 +45,11 @@ func (m MarketMySQL) CreateProduct(product entity.Market) (entity.Market, error)
 	return product, nil
 }
 
-func (m MarketMySQL) GetAllProducts() ([]entity.Market, error) {
+func (m MarketMySQL) GetAllProducts(page, size int) ([]entity.Market, error) {
 	var products []entity.Market
-	if err := m.db.Preload("Store").Find(&products).Error; err != nil {
+	offset := (page - 1) * size
+
+	if err := m.db.Preload("Store").Find(&products).Limit(size).Offset(offset).Error; err != nil {
 		return nil, err
 	}
 	return products, nil

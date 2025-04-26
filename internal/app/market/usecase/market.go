@@ -14,7 +14,7 @@ import (
 
 type MarketUsecaseItf interface {
 	CreateProduct(param dto.CreateProduct) (dto.ProductResponse, error)
-	GetAllProducts() ([]dto.ProductResponse, error)
+	GetAllProducts(page, size int) ([]dto.ProductResponse, error)
 	GetProductByID(productID string) (*dto.ProductResponse, error)
 }
 
@@ -96,8 +96,8 @@ func (m *MarketUsecase) CreateProduct(param dto.CreateProduct) (dto.ProductRespo
 	}, nil
 }
 
-func (m *MarketUsecase) GetAllProducts() ([]dto.ProductResponse, error) {
-	products, err := m.marketRepo.GetAllProducts()
+func (m *MarketUsecase) GetAllProducts(page, size int) ([]dto.ProductResponse, error) {
+	products, err := m.marketRepo.GetAllProducts(page, size)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get products: %w", err)
 	}

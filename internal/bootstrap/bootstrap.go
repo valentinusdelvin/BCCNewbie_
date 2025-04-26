@@ -14,6 +14,7 @@ import (
 	"hackfest-uc/internal/domain/entity"
 	"hackfest-uc/internal/infra/env"
 	"hackfest-uc/internal/infra/jwt"
+	"hackfest-uc/internal/infra/midtrans"
 	"hackfest-uc/internal/infra/supabase"
 	"hackfest-uc/internal/middleware"
 	"hackfest-uc/internal/validation"
@@ -33,6 +34,8 @@ func Start() error {
 	if err != nil {
 		log.Fatalf("Failed to load environment variables: %v", err)
 	}
+
+	midtrans.MidtransInit()
 
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
