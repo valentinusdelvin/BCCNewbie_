@@ -23,6 +23,7 @@ func NewMarketHandler(routerGroup fiber.Router, marketUsecase usecase.MarketUsec
 	marketGroup := routerGroup.Group("/markets")
 	marketGroup.Post("/", MarketHandler.Middleware.Authentication, MarketHandler.CreateProduct)
 	marketGroup.Get("/", MarketHandler.GetAllProducts)
+	marketGroup.Get("/:product_id", MarketHandler.GetProductByID)
 }
 
 func (h *MarketHandler) CreateProduct(ctx *fiber.Ctx) error {
@@ -93,5 +94,29 @@ func (h *MarketHandler) GetAllProducts(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"data":    products,
+	})
+}
+
+func (h *MarketHandler) GetProductByID(ctx *fiber.Ctx) error {
+	productID := ctx.Params("product_id")
+	if productID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Product ID is required",
+		})
+	}
+
+	product, err := h.MarketUsecase.GetProductByID(productID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to get product",
+			"error":   err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    product,
 	})
 }
