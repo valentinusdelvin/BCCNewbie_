@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"errors"
 	"hackfest-uc/internal/app/waste_deposit/repository"
 	"hackfest-uc/internal/domain/dto"
 	"hackfest-uc/internal/domain/entity"
@@ -27,6 +28,14 @@ func NewWasteDepositUsecase(wasteDepositRepo repository.WasteDepositMySQLItf) Wa
 
 func (u WasteDepositUsecase) CreateDeposit(userId uuid.UUID, req dto.DepositRequest) (*dto.DepositResponse, error) {
 	reward := calculateReward(req.WasteType, req.WasteWeight)
+
+	if req.WasteWeight <= 0 {
+		return nil, errors.New("waste weight must be more than 0")
+	}
+
+	if req.WasteWeight > 1000 {
+		return nil, errors.New("maximum waste weight 1000 kg")
+	}
 
 	deposit := entity.WasteDeposit{
 		DepositId:    uuid.New(),
