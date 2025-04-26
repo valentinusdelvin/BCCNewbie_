@@ -50,9 +50,9 @@ func (u UserUsecase) Register(register dto.Register) (entity.User, error) {
 
 	user = entity.User{
 		UserId:    uuid.New(),
+		Email:     register.Email,
 		FirstName: register.FirstName,
 		LastName:  register.LastName,
-		Email:     register.Email,
 		Password:  string(hashedPassword),
 	}
 
