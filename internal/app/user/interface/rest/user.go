@@ -77,5 +77,49 @@ func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 		"success": true,
 		"data":    createdUser,
 	})
+}
 
+func (h *UserHandler) Login(ctx *fiber.Ctx) error {
+	var login dto.Login
+
+	if err := ctx.BodyParser(&login); err != nil {
+		log.Printf("Error parsing request body: %v", err)
+		return ctx.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{
+				"success": false,
+				"message": "Invalid request",
+			})
+	}
+
+	if err := h.validator.Struct(login); err != nil {
+		log.Printf("Validation error: %v", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Validation failed",
+		})
+	}
+
+	token, err := h.usecase.Login(login)
+	if err != nil {
+		errorMap := fiber.Map{"general": err.Error()}
+		status := fiber.StatusBadRequest
+
+		if strings.Contains(err.Error(), "invalid email or password") {
+			status = fiber.StatusUnauthorized
+			errorMap = fiber.Map{
+				"email":    "Invalid email or password",
+				"password": "Invalid email or password",
+			}
+		}
+
+		return ctx.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": "Login failed",
+			"errors":  errorMap,
+		})
+	}
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    token,
+	})
 }

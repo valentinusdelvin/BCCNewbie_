@@ -15,6 +15,7 @@ import (
 
 type UserUsecaseItf interface {
 	Register(register dto.Register) (entity.User, error)
+	Login(login dto.Login) (string, error)
 }
 
 type UserUsecase struct {
