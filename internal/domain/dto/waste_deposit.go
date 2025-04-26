@@ -31,3 +31,15 @@ type DepositResponse struct {
 	Status       string    `json:"status"`
 	PickupDate   time.Time `json:"pickup_date"`
 }
+
+type DepositHistory struct {
+	WasteType   string    `json:"waste_type"`
+	WasteWeight float64   `json:"waste_weight"`
+	Status      string    `json:"status"`
+	PickupDate  time.Time `json:"pickup_date"`
+}
+
+type DepositReward struct {
+	Reward     float64   `json:"reward"`
+	PickupDate time.Time `json:"pickup_date"`
+}
