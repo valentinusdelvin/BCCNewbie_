@@ -61,12 +61,6 @@ func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 				"email": "Email already exists",
 			}
 		}
-		if strings.Contains(err.Error(), "username already exists") {
-			status = fiber.StatusConflict
-			errorMap = fiber.Map{
-				"username": "Username already exists",
-			}
-		}
 
 		return ctx.Status(status).JSON(fiber.Map{
 			"success": false,
