@@ -49,7 +49,7 @@ func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 		})
 	}
 
-	createdUser, err := h.usecase.Register(register)
+	_, err := h.usecase.Register(register)
 	if err != nil {
 		errorMap := fiber.Map{"general": err.Error()}
 		status := fiber.StatusBadRequest
@@ -58,12 +58,6 @@ func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 			status = fiber.StatusConflict
 			errorMap = fiber.Map{
 				"email": "Email already exists",
-			}
-		}
-		if strings.Contains(err.Error(), "username already exists") {
-			status = fiber.StatusConflict
-			errorMap = fiber.Map{
-				"username": "Username already exists",
 			}
 		}
 
@@ -75,7 +69,7 @@ func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(http.StatusCreated).JSON(fiber.Map{
 		"success": true,
-		"data":    createdUser,
+		"message": "User registered succesfully",
 	})
 
 }

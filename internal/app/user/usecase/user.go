@@ -42,20 +42,17 @@ func (u UserUsecase) Register(register dto.Register) (entity.User, error) {
 		return entity.User{}, errors.New("Email already exists")
 	}
 
-	if _, err := u.userRepo.FindByUsername(register.Username); err == nil {
-		return entity.User{}, errors.New("Username already exists")
-	}
-
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(register.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return entity.User{}, err
 	}
 
 	user = entity.User{
-		UserId:   uuid.New(),
-		Email:    register.Email,
-		Username: register.Username,
-		Password: string(hashedPassword),
+		UserId:    uuid.New(),
+		Email:     register.Email,
+		FirstName: register.FirstName,
+		LastName:  register.LastName,
+		Password:  string(hashedPassword),
 	}
 
 	err = u.userRepo.Create(user)
