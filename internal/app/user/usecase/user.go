@@ -7,8 +7,8 @@ import (
 	"hackfest-uc/internal/domain/dto"
 	"hackfest-uc/internal/domain/entity"
 	"hackfest-uc/internal/infra/jwt"
+	"hackfest-uc/internal/validation"
 
-	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -19,24 +19,25 @@ type UserUsecaseItf interface {
 }
 
 type UserUsecase struct {
-	userRepo repository.UserMySQLItf
-	validate *validator.Validate
-	jwt      jwt.JWT
+	userRepo  repository.UserMySQLItf
+	validator validation.InputValidation
+	jwt       jwt.JWT
 }
 
-func NewUserUsecase(userRepo repository.UserMySQLItf, jwt jwt.JWT) UserUsecaseItf {
+func NewUserUsecase(userRepo repository.UserMySQLItf, jwt jwt.JWT, validator validation.InputValidation) UserUsecaseItf {
 	return &UserUsecase{
-		userRepo: userRepo,
-		validate: validator.New(),
-		jwt:      jwt,
+		userRepo:  userRepo,
+		validator: validator,
+		jwt:       jwt,
 	}
 }
 
 func (u UserUsecase) Register(register dto.Register) (entity.User, error) {
 	var user entity.User
 
-	if err := u.validate.Struct(register); err != nil {
-		return entity.User{}, fmt.Errorf("validation error: %w", err)
+	validationErrors := u.validator.Validate(register)
+	if len(validationErrors) > 0 {
+		return entity.User{}, fmt.Errorf("validation failed: %v", validationErrors)
 	}
 
 	if _, err := u.userRepo.FindByEmail(register.Email); err == nil {
@@ -66,9 +67,9 @@ func (u UserUsecase) Register(register dto.Register) (entity.User, error) {
 
 func (u UserUsecase) Login(login dto.Login) (string, error) {
 	var user entity.User
-
-	if err := u.validate.Struct(login); err != nil {
-		return "", fmt.Errorf("validation error: %w", err)
+	validationErrors := u.validator.Validate(login)
+	if len(validationErrors) > 0 {
+		return "", fmt.Errorf("validation failed: %v", validationErrors)
 	}
 
 	user, err := u.userRepo.FindByEmail(login.Email)

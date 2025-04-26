@@ -8,15 +8,18 @@ import (
 	UserHandler "hackfest-uc/internal/app/user/interface/rest"
 	UserRepository "hackfest-uc/internal/app/user/repository"
 	UserUsecase "hackfest-uc/internal/app/user/usecase"
+	WasteDepositHandler "hackfest-uc/internal/app/waste_deposit/interface/rest"
+	WasteDepositRepo "hackfest-uc/internal/app/waste_deposit/repository"
+	WasteDepositUsecase "hackfest-uc/internal/app/waste_deposit/usecase"
 	"hackfest-uc/internal/domain/entity"
 	"hackfest-uc/internal/infra/env"
 	"hackfest-uc/internal/infra/jwt"
 	"hackfest-uc/internal/infra/supabase"
 	"hackfest-uc/internal/middleware"
+	"hackfest-uc/internal/validation"
 
 	"log"
 
-	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -57,11 +60,16 @@ func Start() error {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
+	err = database.AutoMigrate(entity.WasteDeposit{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
 	app := fiber.New()
 
 	sb := supabase.Init()
 
-	validator := validator.New()
+	validator := validation.NewInputValidation()
 
 	jwt := jwt.NewJWT()
 	middlewareService := middleware.NewMiddleware(jwt)
@@ -70,8 +78,12 @@ func Start() error {
 	v1 := app.Group("/api/v1")
 
 	userRepo := UserRepository.NewUserMySQL(database)
-	userUsecase := UserUsecase.NewUserUsecase(userRepo, *jwt)
-	UserHandler.NewUserHandler(v1, userUsecase, *validator, middlewareService)
+	userUsecase := UserUsecase.NewUserUsecase(userRepo, *jwt, *validator)
+	UserHandler.NewUserHandler(v1, *validator, userUsecase, middlewareService)
+
+	wasteDepositRepo := WasteDepositRepo.NewWasteDepositMySQL(database)
+	wasteDepositUsecase := WasteDepositUsecase.NewWasteDepositUsecase(wasteDepositRepo)
+	WasteDepositHandler.NewWasteDepositHandler(v1, wasteDepositUsecase, middlewareService, *validator)
 
 	marketRepo := MarketRepository.NewMarketMySQL(database)
 	marketUsecase := MarketUseCase.NewMarketUsecase(marketRepo, sb)
