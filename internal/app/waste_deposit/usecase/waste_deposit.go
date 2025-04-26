@@ -45,7 +45,7 @@ func (u WasteDepositUsecase) CreateDeposit(userId uuid.UUID, req dto.DepositRequ
 		WasteWeight:  req.WasteWeight,
 		Reward:       reward,
 		PickupMethod: req.PickupMethod,
-		Status:       "Pending",
+		Status:       "Completed",
 		PickupDate:   time.Now().UTC(),
 	}
 
