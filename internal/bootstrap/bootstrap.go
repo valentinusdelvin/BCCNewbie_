@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"fmt"
+	"hackfest-uc/internal/domain/entity"
 	"hackfest-uc/internal/infra/env"
 
 	"github.com/gofiber/fiber/v2"
@@ -24,12 +25,23 @@ func Start() error {
 		config.DBName,
 	)
 
-	_, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	database, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 
+	err = database.AutoMigrate(entity.User{}){
+		if err != nil{
+			Log.fatalf("Failed to migrate database: %v", err)
+		}
+	}
+
 	app := fiber.New()
+
+	jwt := jwt.NewJWT()
+	middlewareService := middleware.NewMiddleware(jwt)
+
+	v1 := app.Group("/api/v1")
 
 	return app.Listen(fmt.Sprintf(":%d", config.AppPort))
 }
