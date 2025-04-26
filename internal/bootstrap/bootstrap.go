@@ -45,14 +45,17 @@ func Start() error {
 
 	app := fiber.New()
 
+	validator := validator.New()
+
 	jwt := jwt.NewJWT()
 	middlewareService := middleware.NewMiddleware(jwt)
+	middleware.CorsMiddleware(app)
 
 	v1 := app.Group("/api/v1")
 
 	userRepo := repository.NewUserMySQL(database)
 	userUsecase := usecase.NewUserUsecase(userRepo, *jwt)
-	rest.NewUserHandler(v1, userUsecase, validator.Validate{}, middlewareService)
+	rest.NewUserHandler(v1, userUsecase, *validator, middlewareService)
 
 	return app.Listen(fmt.Sprintf(":%d", config.AppPort))
 }
