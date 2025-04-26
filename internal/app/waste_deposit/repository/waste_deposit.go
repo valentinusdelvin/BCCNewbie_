@@ -21,7 +21,10 @@ func NewWasteDepositMySQL(db *gorm.DB) WasteDepositMySQLItf {
 }
 
 func (r WasteDepositMySQL) Create(deposit entity.WasteDeposit) error {
-	return r.db.Create(deposit).Error
+	if err := r.db.Create(&deposit).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r WasteDepositMySQL) GetByUserId(userId uuid.UUID) ([]entity.WasteDeposit, error) {

@@ -28,7 +28,7 @@ func Start() error {
 	}
 
 	dsn := fmt.Sprintf(
-		"%s%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		config.DBUsername,
 		config.DBPassword,
 		config.DBHost,

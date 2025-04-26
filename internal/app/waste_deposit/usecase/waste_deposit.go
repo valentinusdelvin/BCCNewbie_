@@ -36,18 +36,21 @@ func (u WasteDepositUsecase) CreateDeposit(userId uuid.UUID, req dto.DepositRequ
 		Reward:       reward,
 		PickupMethod: req.PickupMethod,
 		Status:       "Pending",
-		PickupDate:   time.Now(),
+		PickupDate:   time.Now().UTC(),
 	}
 
 	if err := u.wasteDepositRepo.Create(deposit); err != nil {
 		return nil, err
 	}
 	return &dto.DepositResponse{
-		DepositId:   deposit.DepositId,
-		WasteType:   deposit.WasteType,
-		WasteWeight: deposit.WasteWeight,
-		Reward:      deposit.Reward,
-		Status:      deposit.Status,
+		DepositId:    deposit.DepositId,
+		Name:         deposit.Name,
+		WasteType:    deposit.WasteType,
+		WasteWeight:  deposit.WasteWeight,
+		Reward:       deposit.Reward,
+		PickupMethod: deposit.PickupMethod,
+		Status:       deposit.Status,
+		PickupDate:   deposit.PickupDate,
 	}, nil
 }
 

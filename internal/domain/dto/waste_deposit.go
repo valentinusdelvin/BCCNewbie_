@@ -6,11 +6,19 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	WasteTypeOrganicWet = "Limbah Organik Basah"
+	WasteTypeOrganicDry = "Limbah Organik Kering"
+	WasteTypeMixed      = "Limbah Campuran"
+	PickupMethodPickup  = "Pick-Up"
+	PickupMethodDropoff = "Drop-Off"
+)
+
 type DepositRequest struct {
 	Name         string  `json:"name" validate:"required"`
-	WasteType    string  `json:"waste_type" validate:"required"`
-	WasteWeight  float64 `json:"waste_weight" validate:"required"`
-	PickupMethod string  `json:"pickup_method" validate:"required,oneof=pickup dropoff"`
+	WasteType    string  `json:"waste_type" validate:"required,oneof=Limbah Organik Basah Limbah Organik Kering Limbah Campuran"`
+	WasteWeight  float64 `json:"weight" validate:"required,gt=0"`
+	PickupMethod string  `json:"pickup_method" validate:"required,oneof=Pick-Up Drop-Off"`
 }
 
 type DepositResponse struct {
@@ -21,5 +29,5 @@ type DepositResponse struct {
 	Reward       float64   `json:"reward"`
 	PickupMethod string    `json:"pickup_method"`
 	Status       string    `json:"status"`
-	PickupDate   time.Time `json:"pickup_date,omitempty"`
+	PickupDate   time.Time `json:"pickup_date"`
 }

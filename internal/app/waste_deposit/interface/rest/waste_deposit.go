@@ -20,12 +20,18 @@ func NewWasteDepositHandler(routerGroup fiber.Router, wasteDepositUsecase usecas
 		middleware:          middleware,
 	}
 
-	routerGroup = routerGroup.Group("/deposits")
+	routerGroup = routerGroup.Group("/deposits", middleware.Authentication)
 	routerGroup.Post("/", WasteDepositHandler.CreateDeposit)
+
 }
 
 func (h WasteDepositHandler) CreateDeposit(ctx *fiber.Ctx) error {
-	userId := ctx.Locals("userId").(uuid.UUID)
+	userId, ok := ctx.Locals("userId").(uuid.UUID)
+	if !ok {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Invalid user ID format",
+		})
+	}
 
 	var req dto.DepositRequest
 	if err := ctx.BodyParser(&req); err != nil {
