@@ -1,8 +1,6 @@
 package env
 
 import (
-	"os"
-
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 )
@@ -34,8 +32,4 @@ func New() (*Env, error) {
 	}
 
 	return config, nil
-}
-
-func GetEnv(key string) string {
-	return os.Getenv(key)
 }
