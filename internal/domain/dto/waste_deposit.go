@@ -17,7 +17,7 @@ const (
 type DepositRequest struct {
 	Name         string  `json:"name" validate:"required"`
 	WasteType    string  `json:"waste_type" validate:"required,oneof=Limbah Organik Basah Limbah Organik Kering Limbah Campuran"`
-	WasteWeight  float64 `json:"weight" validate:"required,gt=0"`
+	WasteWeight  float64 `json:"waste_weight" validate:"required,gt=0"`
 	PickupMethod string  `json:"pickup_method" validate:"required,oneof=Pick-Up Drop-Off"`
 }
 
