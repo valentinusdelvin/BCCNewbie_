@@ -12,7 +12,7 @@ import (
 
 type InterPaymentUsecase interface {
 	Purchase(payment entity.Payment) (string, error)
-	Validate(MidtransNotifications map[string]interface{}) error
+	// Validate(MidtransNotifications map[string]interface{}) error
 }
 
 type PaymentUsecase struct {
@@ -38,16 +38,16 @@ func (p *PaymentUsecase) Purchase(payment entity.Payment) (string, error) {
 	snapReq := &snap.Request{
 		TransactionDetails: midtrans.TransactionDetails{
 			OrderID:  payment.OrderID.String(),
-			GrossAmt: int64(product.ProductPrice),
+			GrossAmt: int64(product.ProductPrice * payment.Amount),
 		},
 		Items: &[]midtrans.ItemDetails{
 			{
-				ID:           webinar.ID.String(),
-				Name:         webinar.WebinarName,
-				Price:        int64(webinar.Price),
-				Qty:          1,
-				Category:     "Webinar VeloVent",
-				MerchantName: "Velo Mom",
+				ID:           product.ProductId,
+				Name:         product.ProductName,
+				Price:        int64(product.ProductPrice),
+				Qty:          int32(payment.Amount),
+				Category:     "Pembelian E-Commerce",
+				MerchantName: "ComposIT",
 			},
 		},
 	}
@@ -55,7 +55,7 @@ func (p *PaymentUsecase) Purchase(payment entity.Payment) (string, error) {
 	ServiceFee := midtrans.ItemDetails{
 		ID:    "biaya_layanan",
 		Name:  "Biaya Layanan",
-		Price: 2000,
+		Price: (7 / 100) * int64(product.ProductPrice*payment.Amount),
 		Qty:   1,
 	}
 
@@ -72,84 +72,84 @@ func (p *PaymentUsecase) Purchase(payment entity.Payment) (string, error) {
 	payment.PaymentLink = paymentLink
 	payment.ProductName = (*snapReq.Items)[0].Name
 
-	err = p.prsc.CreatePayment(payment)
+	err = p.rp.CreatePayment(payment)
 	if err != nil {
 		return "", err
 	}
 	return paymentLink, nil
 }
 
-func (p *PaymentUsecase) Validate(MidtransNotifications map[string]interface{}) error {
-	transactionStatus := MidtransNotifications["transaction_status"]
-	orderID := MidtransNotifications["order_id"].(string)
-	fraudStatus := MidtransNotifications["fraud_status"]
+// func (p *PaymentUsecase) Validate(MidtransNotifications map[string]interface{}) error {
+// 	transactionStatus := MidtransNotifications["transaction_status"]
+// 	orderID := MidtransNotifications["order_id"].(string)
+// 	fraudStatus := MidtransNotifications["fraud_status"]
 
-	err := p.db.Transaction(func(tx *gorm.DB) error {
-		switch transactionStatus {
-		case "capture":
-			switch fraudStatus {
-			case "challenge":
-				return p.prsc.UpdatePaymentStatus(tx, "challenge", orderID)
-			case "accept":
-				if err := p.prsc.UpdatePaymentStatus(tx, "success", orderID); err != nil {
-					return err
-				}
-				invoice, err := p.prsc.GetInvoice(orderID)
-				if err != nil {
-					return err
-				}
-				attendee := entity.WebinarAttendee{
-					UserID:    invoice.UserID,
-					WebinarID: invoice.ProductID,
-				}
+// 	err := p.db.Transaction(func(tx *gorm.DB) error {
+// 		switch transactionStatus {
+// 		case "capture":
+// 			switch fraudStatus {
+// 			case "challenge":
+// 				return p.prsc.UpdatePaymentStatus(tx, "challenge", orderID)
+// 			case "accept":
+// 				if err := p.prsc.UpdatePaymentStatus(tx, "success", orderID); err != nil {
+// 					return err
+// 				}
+// 				invoice, err := p.prsc.GetInvoice(orderID)
+// 				if err != nil {
+// 					return err
+// 				}
+// 				attendee := entity.WebinarAttendee{
+// 					UserID:    invoice.UserID,
+// 					WebinarID: invoice.ProductID,
+// 				}
 
-				if err := p.wrsc.CreateWebinarAttendee(tx, attendee); err != nil {
-					return err
-				}
+// 				if err := p.wrsc.CreateWebinarAttendee(tx, attendee); err != nil {
+// 					return err
+// 				}
 
-				if err := p.wrsc.UpdateWebinarInfo(tx, invoice.ProductID); err != nil {
-					return err
-				}
-				return nil
-			}
+// 				if err := p.wrsc.UpdateWebinarInfo(tx, invoice.ProductID); err != nil {
+// 					return err
+// 				}
+// 				return nil
+// 			}
 
-		case "settlement":
-			if err := p.prsc.UpdatePaymentStatus(tx, "success", orderID); err != nil {
-				return err
-			}
-			invoice, err := p.prsc.GetInvoice(orderID)
-			if err != nil {
-				return err
-			}
-			attendee := entity.WebinarAttendee{
-				UserID:    invoice.UserID,
-				WebinarID: invoice.ProductID,
-			}
+// 		case "settlement":
+// 			if err := p.prsc.UpdatePaymentStatus(tx, "success", orderID); err != nil {
+// 				return err
+// 			}
+// 			invoice, err := p.prsc.GetInvoice(orderID)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			attendee := entity.WebinarAttendee{
+// 				UserID:    invoice.UserID,
+// 				WebinarID: invoice.ProductID,
+// 			}
 
-			if err := p.wrsc.CreateWebinarAttendee(tx, attendee); err != nil {
-				return err
-			}
+// 			if err := p.wrsc.CreateWebinarAttendee(tx, attendee); err != nil {
+// 				return err
+// 			}
 
-			if err := p.wrsc.UpdateWebinarInfo(tx, invoice.ProductID); err != nil {
-				return err
-			}
-			return nil
+// 			if err := p.wrsc.UpdateWebinarInfo(tx, invoice.ProductID); err != nil {
+// 				return err
+// 			}
+// 			return nil
 
-		case "cancel", "expire":
-			return p.prsc.UpdatePaymentStatus(tx, "failure", orderID)
+// 		case "cancel", "expire":
+// 			return p.prsc.UpdatePaymentStatus(tx, "failure", orderID)
 
-		case "pending":
-			return p.prsc.UpdatePaymentStatus(tx, "pending", orderID)
+// 		case "pending":
+// 			return p.prsc.UpdatePaymentStatus(tx, "pending", orderID)
 
-		case "deny":
-			return p.prsc.UpdatePaymentStatus(tx, "denied", orderID)
-		}
+// 		case "deny":
+// 			return p.prsc.UpdatePaymentStatus(tx, "denied", orderID)
+// 		}
 
-		return nil
-	})
+// 		return nil
+// 	})
 
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
