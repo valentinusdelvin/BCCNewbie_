@@ -12,5 +12,11 @@ func Migrate(db *gorm.DB) error {
 	); err != nil {
 		return err
 	}
+
+	if err := db.AutoMigrate(
+		entity.WasteDeposit{},
+	); err != nil {
+		return err
+	}
 	return nil
 }
