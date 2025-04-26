@@ -5,13 +5,17 @@ go 1.24.0
 require github.com/gofiber/fiber/v2 v2.52.6
 
 require (
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/gofiber/utils v0.0.10 // indirect
 	github.com/gorilla/schema v1.1.0 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
 )
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/caarlos0/env/v11 v11.3.1 // indirect
+	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/gofiber/fiber v1.14.6
 	github.com/golang-jwt/jwt/v5 v5.2.2
