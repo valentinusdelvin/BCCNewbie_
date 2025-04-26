@@ -30,7 +30,7 @@ func NewMarketUsecase(marketRepo repository.MarketMySQLItf, sb supabase.Supabase
 	}
 }
 
-func (m MarketUsecase) CreateProduct(param dto.CreateProduct) (dto.ProductResponse, error) {
+func (m *MarketUsecase) CreateProduct(param dto.CreateProduct) (dto.ProductResponse, error) {
 	productId := uuid.New().String()
 
 	// Validate file
@@ -96,7 +96,7 @@ func (m MarketUsecase) CreateProduct(param dto.CreateProduct) (dto.ProductRespon
 	}, nil
 }
 
-func (m MarketUsecase) GetAllProducts() ([]dto.ProductResponse, error) {
+func (m *MarketUsecase) GetAllProducts() ([]dto.ProductResponse, error) {
 	products, err := m.marketRepo.GetAllProducts()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get products: %w", err)
@@ -110,7 +110,7 @@ func (m MarketUsecase) GetAllProducts() ([]dto.ProductResponse, error) {
 	return responses, nil
 }
 
-func (m MarketUsecase) GetProductByID(productID string) (*dto.ProductResponse, error) {
+func (m *MarketUsecase) GetProductByID(productID string) (*dto.ProductResponse, error) {
 	product, err := m.marketRepo.GetProductByID(productID)
 	if err != nil {
 		return nil, fmt.Errorf("product not found: %w", err)
@@ -120,7 +120,7 @@ func (m MarketUsecase) GetProductByID(productID string) (*dto.ProductResponse, e
 	return &response, nil
 }
 
-func (m MarketUsecase) convertToProductResponse(product *entity.Market) dto.ProductResponse {
+func (m *MarketUsecase) convertToProductResponse(product *entity.Market) dto.ProductResponse {
 	return dto.ProductResponse{
 		ProductId:           product.ProductId,
 		StoreId:             product.Store.StoreId,

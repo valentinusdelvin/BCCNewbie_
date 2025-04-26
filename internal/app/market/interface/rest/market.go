@@ -27,7 +27,6 @@ func NewMarketHandler(routerGroup fiber.Router, marketUsecase usecase.MarketUsec
 func (h *MarketHandler) CreateProduct(ctx *fiber.Ctx) error {
 	var product dto.CreateProduct
 
-	// Parse form data including file upload
 	form, err := ctx.MultipartForm()
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -36,7 +35,15 @@ func (h *MarketHandler) CreateProduct(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// Parse other fields
+	// Cek file ada gak
+	if len(form.File["photo_img"]) == 0 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "photo_img is required",
+		})
+	}
+	product.PhotoIMG = form.File["photo_img"][0]
+
 	product.ProductName = form.Value["product_name"][0]
 	product.ProductPrice, _ = strconv.ParseUint(form.Value["product_price"][0], 10, 64)
 	product.ProductWeight, _ = strconv.ParseUint(form.Value["product_weight"][0], 10, 64)
@@ -45,11 +52,7 @@ func (h *MarketHandler) CreateProduct(ctx *fiber.Ctx) error {
 	product.Composition = dto.Composition(form.Value["composition"][0])
 	product.Description = form.Value["description"][0]
 
-	// Get uploaded file
-	if len(form.File["photo_img"]) > 0 {
-		product.PhotoIMG = form.File["photo_img"][0]
-	}
-
+	// Set StoreId dari token
 	userId := ctx.Locals("userId")
 	if userId == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -57,6 +60,7 @@ func (h *MarketHandler) CreateProduct(ctx *fiber.Ctx) error {
 			"message": "Unauthorized",
 		})
 	}
+	product.StoreId = form.Value["store_id"][0]
 
 	_, err = h.MarketUsecase.CreateProduct(product)
 	if err != nil {

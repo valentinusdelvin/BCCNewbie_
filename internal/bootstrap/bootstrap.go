@@ -21,11 +21,14 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 func Start() error {
+	_ = godotenv.Load(".env")
+
 	config, err := env.New()
 	if err != nil {
 		log.Fatalf("Failed to load environment variables: %v", err)
