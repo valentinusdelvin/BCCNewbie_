@@ -5,6 +5,8 @@ go 1.24.0
 require github.com/gofiber/fiber/v2 v2.52.6
 
 require (
+	github.com/adityarizkyramadhan/supabase-storage-uploader v1.0.0 // indirect
+	github.com/fatih/color v1.15.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
