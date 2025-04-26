@@ -40,6 +40,7 @@ func (h WasteDepositHandler) CreateDeposit(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Invalid request",
+			"error":   err.Error(),
 		})
 	}
 
