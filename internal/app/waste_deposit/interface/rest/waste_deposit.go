@@ -5,6 +5,7 @@ import (
 	"hackfest-uc/internal/domain/dto"
 	"hackfest-uc/internal/middleware"
 	"hackfest-uc/internal/validation"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -40,6 +41,13 @@ func (h WasteDepositHandler) CreateDeposit(ctx *fiber.Ctx) error {
 
 	var req dto.DepositRequest
 	if err := ctx.BodyParser(&req); err != nil {
+		if strings.Contains(err.Error(), "berat limbah") {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Validation failed",
+				"error":   err.Error(),
+			})
+		}
+
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Invalid request",
 			"error":   err.Error(),

@@ -84,7 +84,7 @@ func Start() error {
 	v1 := app.Group("/api/v1")
 
 	userRepo := UserRepository.NewUserMySQL(database)
-	userUsecase := UserUsecase.NewUserUsecase(userRepo, *jwt, *validator)
+	userUsecase := UserUsecase.NewUserUsecase(userRepo, *jwt, *validator, sb)
 	UserHandler.NewUserHandler(v1, *validator, userUsecase, middlewareService)
 
 	wasteDepositRepo := WasteDepositRepo.NewWasteDepositMySQL(database)

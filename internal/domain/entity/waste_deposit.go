@@ -14,7 +14,7 @@ type WasteDeposit struct {
 	WasteWeight  float64   `json:"waste_weight" gorm:"type:decimal(10,2);not null"`
 	Reward       float64   `json:"reward" gorm:"type:decimal(10,2);not null"`
 	PickupMethod string    `json:"pickup_method" gorm:"type:enum('Pick-Up','Drop-Off');not null"`
-	Status       string    `json:"status" gorm:"type:enum('Pending','Scheduled','Completed');default:'Pending'"`
+	Status       string    `json:"status" gorm:"type:enum('Pending','Scheduled','Completed');default:'Completed'"`
 	PickupDate   time.Time `json:"pickup_date" gorm:"type:datetime;not null"`
 
 	User User `gorm:"foreignKey:UserId"`
