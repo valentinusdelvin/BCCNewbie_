@@ -4,6 +4,7 @@ import (
 	"hackfest-uc/internal/app/waste_deposit/usecase"
 	"hackfest-uc/internal/domain/dto"
 	"hackfest-uc/internal/middleware"
+	"hackfest-uc/internal/validation"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -11,13 +12,15 @@ import (
 
 type WasteDepositHandler struct {
 	wasteDepositUsecase usecase.WasteDepositUsecaseItf
+	validator           validation.InputValidation
 	middleware          middleware.MiddlewareItf
 }
 
-func NewWasteDepositHandler(routerGroup fiber.Router, wasteDepositUsecase usecase.WasteDepositUsecaseItf, middleware middleware.MiddlewareItf) {
+func NewWasteDepositHandler(routerGroup fiber.Router, wasteDepositUsecase usecase.WasteDepositUsecaseItf, middleware middleware.MiddlewareItf, validator validation.InputValidation) {
 	WasteDepositHandler := WasteDepositHandler{
 		wasteDepositUsecase: wasteDepositUsecase,
 		middleware:          middleware,
+		validator:           validator,
 	}
 
 	routerGroup = routerGroup.Group("/deposits", middleware.Authentication)

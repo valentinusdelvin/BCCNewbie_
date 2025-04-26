@@ -67,7 +67,7 @@ func Start() error {
 
 	wasteDepositRepo := WasteDepositRepo.NewWasteDepositMySQL(database)
 	wasteDepositUsecase := WasteDepositUsecase.NewWasteDepositUsecase(wasteDepositRepo)
-	WasteDepositHandler.NewWasteDepositHandler(v1, wasteDepositUsecase, middlewareService)
+	WasteDepositHandler.NewWasteDepositHandler(v1, wasteDepositUsecase, middlewareService, *validator)
 
 	return app.Listen(fmt.Sprintf(":%d", config.AppPort))
 }

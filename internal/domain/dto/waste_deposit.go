@@ -25,7 +25,7 @@ type DepositResponse struct {
 	DepositId    uuid.UUID `json:"deposit_id"`
 	Name         string    `json:"name"`
 	WasteType    string    `json:"waste_type"`
-	WasteWeight  float64   `json:"weight"`
+	WasteWeight  float64   `json:"waste_weight"`
 	Reward       float64   `json:"reward"`
 	PickupMethod string    `json:"pickup_method"`
 	Status       string    `json:"status"`

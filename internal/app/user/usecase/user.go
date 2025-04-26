@@ -35,8 +35,9 @@ func NewUserUsecase(userRepo repository.UserMySQLItf, jwt jwt.JWT, validator val
 func (u UserUsecase) Register(register dto.Register) (entity.User, error) {
 	var user entity.User
 
-	if err := u.validator.Validate(register); err != nil {
-		return entity.User{}, err
+	validationErrors := u.validator.Validate(register)
+	if len(validationErrors) > 0 {
+		return entity.User{}, fmt.Errorf("validation failed: %v", validationErrors)
 	}
 
 	if _, err := u.userRepo.FindByEmail(register.Email); err == nil {
@@ -66,9 +67,9 @@ func (u UserUsecase) Register(register dto.Register) (entity.User, error) {
 
 func (u UserUsecase) Login(login dto.Login) (string, error) {
 	var user entity.User
-
-	if err := u.validator.Validate(login); err != nil {
-		return "", fmt.Errorf("validation error: %w", err)
+	validationErrors := u.validator.Validate(login)
+	if len(validationErrors) > 0 {
+		return "", fmt.Errorf("validation failed: %v", validationErrors)
 	}
 
 	user, err := u.userRepo.FindByEmail(login.Email)
