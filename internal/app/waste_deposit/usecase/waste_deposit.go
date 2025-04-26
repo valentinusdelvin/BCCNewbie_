@@ -11,7 +11,8 @@ import (
 
 type WasteDepositUsecaseItf interface {
 	CreateDeposit(userId uuid.UUID, req dto.DepositRequest) (*dto.DepositResponse, error)
-	GetUserDeposits(userId uuid.UUID) ([]dto.DepositResponse, error)
+	GetUserDeposits(userId uuid.UUID) ([]dto.DepositHistory, error)
+	GetUserReward(userId uuid.UUID) ([]dto.DepositReward, error)
 }
 
 type WasteDepositUsecase struct {
@@ -54,21 +55,36 @@ func (u WasteDepositUsecase) CreateDeposit(userId uuid.UUID, req dto.DepositRequ
 	}, nil
 }
 
-func (u WasteDepositUsecase) GetUserDeposits(userId uuid.UUID) ([]dto.DepositResponse, error) {
+func (u WasteDepositUsecase) GetUserDeposits(userId uuid.UUID) ([]dto.DepositHistory, error) {
 	deposits, err := u.wasteDepositRepo.GetByUserId(userId)
 	if err != nil {
 		return nil, err
 	}
 
-	var responses []dto.DepositResponse
+	var responses []dto.DepositHistory
 	for _, d := range deposits {
-		responses = append(responses, dto.DepositResponse{
-			DepositId:   d.DepositId,
+		responses = append(responses, dto.DepositHistory{
 			WasteType:   d.WasteType,
 			WasteWeight: d.WasteWeight,
-			Reward:      d.Reward,
 			Status:      d.Status,
 			PickupDate:  d.PickupDate,
+		})
+	}
+
+	return responses, nil
+}
+
+func (u WasteDepositUsecase) GetUserReward(userId uuid.UUID) ([]dto.DepositReward, error) {
+	deposits, err := u.wasteDepositRepo.GetByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	var responses []dto.DepositReward
+	for _, d := range deposits {
+		responses = append(responses, dto.DepositReward{
+			Reward:     d.Reward,
+			PickupDate: d.PickupDate,
 		})
 	}
 
