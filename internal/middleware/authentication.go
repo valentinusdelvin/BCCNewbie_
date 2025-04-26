@@ -34,7 +34,7 @@ func (m *Middleware) Authentication(ctx *fiber.Ctx) error {
 	token := strings.Split(bearerToken, " ")[1]
 	fmt.Println(token)
 
-	id, isAdmin, err := m.jwt.ValidateToken(token)
+	id, err := m.jwt.ValidateToken(token)
 	if err != nil {
 		ctx.Status(401).JSON(fiber.Map{
 			"message": "Unauthorized",
@@ -44,6 +44,5 @@ func (m *Middleware) Authentication(ctx *fiber.Ctx) error {
 	}
 
 	ctx.Locals("userId", id)
-	ctx.Locals("isAdmin", isAdmin)
 	return ctx.Next()
 }

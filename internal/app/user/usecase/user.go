@@ -15,6 +15,7 @@ import (
 
 type UserUsecaseItf interface {
 	Register(register dto.Register) (entity.User, error)
+	Login(login dto.Login) (string, error)
 }
 
 type UserUsecase struct {
@@ -42,20 +43,17 @@ func (u UserUsecase) Register(register dto.Register) (entity.User, error) {
 		return entity.User{}, errors.New("Email already exists")
 	}
 
-	if _, err := u.userRepo.FindByUsername(register.Username); err == nil {
-		return entity.User{}, errors.New("Username already exists")
-	}
-
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(register.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return entity.User{}, err
 	}
 
 	user = entity.User{
-		UserId:   uuid.New(),
-		Email:    register.Email,
-		Username: register.Username,
-		Password: string(hashedPassword),
+		UserId:    uuid.New(),
+		FirstName: register.FirstName,
+		LastName:  register.LastName,
+		Email:     register.Email,
+		Password:  string(hashedPassword),
 	}
 
 	err = u.userRepo.Create(user)
@@ -64,4 +62,29 @@ func (u UserUsecase) Register(register dto.Register) (entity.User, error) {
 	}
 
 	return user, nil
+}
+
+func (u UserUsecase) Login(login dto.Login) (string, error) {
+	var user entity.User
+
+	if err := u.validate.Struct(login); err != nil {
+		return "", fmt.Errorf("validation error: %w", err)
+	}
+
+	user, err := u.userRepo.FindByEmail(login.Email)
+	if err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(login.Password))
+	if err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	token, err := u.jwt.GenerateToken(user.UserId)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	return token, nil
 }

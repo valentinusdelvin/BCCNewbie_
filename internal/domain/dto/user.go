@@ -1,12 +1,13 @@
 package dto
 
 type Register struct {
-	Email    string `json:"email" validate:"required,email"`
-	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required,min=8"`
+	Email     string `json:"email" validate:"required,email"`
+	FirstName string `json:"first_name" validate:"required"`
+	LastName  string `json:"last_name" validate:"required"`
+	Password  string `json:"password" validate:"required,min=8"`
 }
 
 type Login struct {
-	Username string `json:"username" validate:"required"`
+	Email    string `json:"user" validate:"required"`
 	Password string `json:"password" validate:"required,min=8"`
 }

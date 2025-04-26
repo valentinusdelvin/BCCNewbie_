@@ -35,15 +35,13 @@ func NewJWT() *JWT {
 }
 
 type Claims struct {
-	UserId  uuid.UUID
-	IsAdmin bool
+	UserId uuid.UUID
 	jwt.RegisteredClaims
 }
 
-func (j *JWT) GenerateToken(UserId uuid.UUID, isAdmin bool) (string, error) {
+func (j *JWT) GenerateToken(UserId uuid.UUID) (string, error) {
 	claim := Claims{
-		UserId:  UserId,
-		IsAdmin: isAdmin,
+		UserId: UserId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 2)),
 		},
@@ -59,7 +57,7 @@ func (j *JWT) GenerateToken(UserId uuid.UUID, isAdmin bool) (string, error) {
 	return tokenString, nil
 }
 
-func (j *JWT) ValidateToken(tokenString string) (uuid.UUID, bool, error) {
+func (j *JWT) ValidateToken(tokenString string) (uuid.UUID, error) {
 	var claim Claims
 	var id uuid.UUID
 
@@ -70,14 +68,14 @@ func (j *JWT) ValidateToken(tokenString string) (uuid.UUID, bool, error) {
 	})
 
 	if err != nil {
-		return id, false, err
+		return id, err
 	}
 
 	if !token.Valid {
-		return id, false, err
+		return id, err
 	}
 
 	id = claim.UserId
 
-	return id, claim.IsAdmin, nil
+	return id, nil
 }
