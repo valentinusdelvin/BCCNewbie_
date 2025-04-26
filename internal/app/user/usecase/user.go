@@ -7,7 +7,9 @@ import (
 	"hackfest-uc/internal/domain/dto"
 	"hackfest-uc/internal/domain/entity"
 	"hackfest-uc/internal/infra/jwt"
+	"hackfest-uc/internal/infra/supabase"
 	"hackfest-uc/internal/validation"
+	"mime/multipart"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -16,19 +18,24 @@ import (
 type UserUsecaseItf interface {
 	Register(register dto.Register) (entity.User, error)
 	Login(login dto.Login) (string, error)
+	GetProfile(userId uuid.UUID) (dto.ProfileResponse, error)
+	UpdateProfile(userId uuid.UUID, req dto.UpdateProfileRequest) (dto.ProfileResponse, error)
+	UpdateProfilePicture(userID uuid.UUID, file *multipart.FileHeader) (dto.ProfileResponse, error)
 }
 
 type UserUsecase struct {
 	userRepo  repository.UserMySQLItf
 	validator validation.InputValidation
 	jwt       jwt.JWT
+	supabase  supabase.SupabaseItf
 }
 
-func NewUserUsecase(userRepo repository.UserMySQLItf, jwt jwt.JWT, validator validation.InputValidation) UserUsecaseItf {
+func NewUserUsecase(userRepo repository.UserMySQLItf, jwt jwt.JWT, validator validation.InputValidation, supabase supabase.SupabaseItf) UserUsecaseItf {
 	return &UserUsecase{
 		userRepo:  userRepo,
 		validator: validator,
 		jwt:       jwt,
+		supabase:  supabase,
 	}
 }
 
@@ -88,4 +95,52 @@ func (u UserUsecase) Login(login dto.Login) (string, error) {
 	}
 
 	return token, nil
+}
+
+func (u UserUsecase) GetProfile(userId uuid.UUID) (dto.ProfileResponse, error) {
+	user, err := u.userRepo.GetById(userId)
+	if err != nil {
+		return dto.ProfileResponse{}, err
+	}
+
+	return dto.ProfileResponse{
+		UserID:     user.UserId,
+		Email:      user.Email,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		ProfilePic: user.ProfilePic,
+	}, nil
+}
+
+func (u UserUsecase) UpdateProfile(userId uuid.UUID, req dto.UpdateProfileRequest) (dto.ProfileResponse, error) {
+	user, err := u.userRepo.GetById(userId)
+	if err != nil {
+		return dto.ProfileResponse{}, err
+	}
+
+	if req.FirstName != "" {
+		user.FirstName = req.FirstName
+	}
+	if req.LastName != "" {
+		user.LastName = req.LastName
+	}
+
+	if err := u.userRepo.Update(user); err != nil {
+		return dto.ProfileResponse{}, err
+	}
+
+	return u.GetProfile(userId)
+}
+
+func (u UserUsecase) UpdateProfilePicture(userID uuid.UUID, file *multipart.FileHeader) (dto.ProfileResponse, error) {
+	imageURL, err := u.supabase.Upload(file)
+	if err != nil {
+		return dto.ProfileResponse{}, err
+	}
+
+	if err := u.userRepo.UpdateProfilePicture(userID, imageURL); err != nil {
+		return dto.ProfileResponse{}, err
+	}
+
+	return u.GetProfile(userID)
 }

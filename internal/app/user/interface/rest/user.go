@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type UserHandler struct {
@@ -28,6 +29,11 @@ func NewUserHandler(routerGroup fiber.Router, validator validation.InputValidati
 	routerGroup = routerGroup.Group("/users")
 	routerGroup.Post("/register", UserHandler.Register)
 	routerGroup.Post("/login", UserHandler.Login)
+
+	protectedGroup := routerGroup.Group("/users", middleware.Authentication)
+	protectedGroup.Get("/", UserHandler.GetProfile)
+	protectedGroup.Put("/", UserHandler.UpdateProfile)
+	protectedGroup.Put("/picture", UserHandler.UpdateProfilePicture)
 }
 
 func (h *UserHandler) Register(ctx *fiber.Ctx) error {
@@ -117,4 +123,81 @@ func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 		"success": true,
 		"data":    token,
 	})
+}
+
+func (h *UserHandler) GetProfile(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userId").(uuid.UUID)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid user ID",
+		})
+	}
+
+	profile, err := h.usecase.GetProfile(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to get profile",
+		})
+	}
+
+	return c.JSON(profile)
+}
+
+func (h *UserHandler) UpdateProfile(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userId").(uuid.UUID)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid user ID",
+		})
+	}
+
+	var req dto.UpdateProfileRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	profile, err := h.usecase.UpdateProfile(userID, req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update profile",
+		})
+	}
+
+	return c.JSON(profile)
+}
+
+func (h UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userId").(uuid.UUID)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid user ID",
+		})
+	}
+
+	// Get file from form data
+	file, err := c.FormFile("image")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Image is required",
+		})
+	}
+
+	// Validate file size (max 2MB)
+	if file.Size > 2<<20 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Image too large (max 2MB)",
+		})
+	}
+
+	profile, err := h.usecase.UpdateProfilePicture(userID, file)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "Failed to update profile picture",
+			"details": err.Error(),
+		})
+	}
+
+	return c.JSON(profile)
 }
