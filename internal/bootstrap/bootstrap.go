@@ -9,10 +9,10 @@ import (
 	"hackfest-uc/internal/infra/env"
 	"hackfest-uc/internal/infra/jwt"
 	"hackfest-uc/internal/middleware"
+	"hackfest-uc/internal/validation"
 
 	"log"
 
-	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -45,7 +45,7 @@ func Start() error {
 
 	app := fiber.New()
 
-	validator := validator.New()
+	validator := validation.NewInputValidation()
 
 	jwt := jwt.NewJWT()
 	middlewareService := middleware.NewMiddleware(jwt)
@@ -54,8 +54,8 @@ func Start() error {
 	v1 := app.Group("/api/v1")
 
 	userRepo := repository.NewUserMySQL(database)
-	userUsecase := usecase.NewUserUsecase(userRepo, *jwt)
-	rest.NewUserHandler(v1, userUsecase, *validator, middlewareService)
+	userUsecase := usecase.NewUserUsecase(userRepo, *jwt, *validator)
+	rest.NewUserHandler(v1, *validator, userUsecase, middlewareService)
 
 	return app.Listen(fmt.Sprintf(":%d", config.AppPort))
 }

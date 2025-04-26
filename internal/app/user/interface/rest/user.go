@@ -4,24 +4,24 @@ import (
 	"hackfest-uc/internal/app/user/usecase"
 	"hackfest-uc/internal/domain/dto"
 	"hackfest-uc/internal/middleware"
+	"hackfest-uc/internal/validation"
 	"log"
 	"net/http"
 	"strings"
 
-	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
 )
 
 type UserHandler struct {
 	usecase    usecase.UserUsecaseItf
-	validator  *validator.Validate
+	validator  validation.InputValidation
 	middleware middleware.MiddlewareItf
 }
 
-func NewUserHandler(routerGroup fiber.Router, userUsecase usecase.UserUsecaseItf, validator validator.Validate, middleware middleware.MiddlewareItf) {
+func NewUserHandler(routerGroup fiber.Router, validator validation.InputValidation, userUsecase usecase.UserUsecaseItf, middleware middleware.MiddlewareItf) {
 	UserHandler := UserHandler{
 		usecase:    userUsecase,
-		validator:  &validator,
+		validator:  validator,
 		middleware: middleware,
 	}
 
@@ -42,7 +42,7 @@ func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 			})
 	}
 
-	if err := h.validator.Struct(register); err != nil {
+	if err := h.validator.Validate(register); err != nil {
 		log.Printf("Validation error: %v", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -86,7 +86,7 @@ func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 			})
 	}
 
-	if err := h.validator.Struct(login); err != nil {
+	if err := h.validator.Validate(login); err != nil {
 		log.Printf("Validation error: %v", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
